@@ -1,4 +1,4 @@
-package com.banco.financeiro;
+package com.banco.financeiro.model;
 
 import java.io.Serializable;
 import java.util.List;
@@ -58,7 +58,7 @@ public class Autenticacao implements Serializable {
 	@Enumerated(EnumType.STRING)
 	@Column(name = "role", nullable = false)
 	@ElementCollection(targetClass = AuthenticationRole.class, fetch = FetchType.EAGER)
-	@JoinTable(name = "sfb_role_autenticacao", joinColumns = @JoinColumn(name = "cd_authentication", referencedColumnName = "cd_authentication"))
+	@JoinTable(name = "sfb_role_autenticacao", joinColumns = @JoinColumn(name = "cd_autenticacao", referencedColumnName = "cd_autenticacao"))
 	private List<AuthenticationRole> roles;
 
 	@ToString.Exclude

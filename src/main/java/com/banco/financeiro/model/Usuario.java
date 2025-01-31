@@ -1,4 +1,4 @@
-package com.banco.financeiro;
+package com.banco.financeiro.model;
 
 import java.io.Serializable;
 import java.time.LocalDate;
