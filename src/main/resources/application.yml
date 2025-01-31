@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: financeiro
+  datasource:
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5433/postgres?useTimezone=true&serverTimezone=UTC
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  docker:
+    compose:
+      enabled: true
+      file:
+      - compose.yaml
