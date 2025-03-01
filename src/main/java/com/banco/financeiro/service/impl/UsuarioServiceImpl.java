@@ -14,7 +14,9 @@ import com.banco.financeiro.service.AutenticacaoService;
 import com.banco.financeiro.service.TransacaoService;
 import com.banco.financeiro.service.UsuarioService;
 import com.banco.financeiro.service.processor.AutenticacaoProcessor;
+import com.banco.financeiro.utils.MessageUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +24,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UsuarioServiceImpl implements UsuarioService {
@@ -33,6 +36,7 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     public void createUser(UsuarioPDTO usuarioPDTO) {
+        log.info("Criando usuário: {}", usuarioPDTO);
         this.autenticacaoProcessor.alreadyExists(usuarioPDTO.email());
         List<AuthenticationRole> roles = List.of(AuthenticationRole.ROLE_COMMON);
         Autenticacao autenticacao = this.autenticacaoService.include(usuarioPDTO, roles);
@@ -40,46 +44,57 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .dataNascimento(usuarioPDTO.dataNascimento()).saldo(BigDecimal.ZERO)
                 .numeroConta(UUID.randomUUID().toString()).build();
         this.usuarioRepository.save(usuario);
+        log.info("Usuário criado com sucesso: {}", usuario);
     }
 
     @Override
     public SaldoContaDTO findSaldo(Authentication authentication) {
+        log.info("Buscando saldo da conta do usuário: {}", authentication.getName());
         Autenticacao autenticacao = this.autenticacaoService.findByEmail(authentication.getName());
         Usuario usuario = autenticacao.getUsuario();
+        log.info("Saldo da conta do usuário: {}", usuario.getSaldo());
         return new SaldoContaDTO(usuario.getNumeroConta(), usuario.getSaldo());
     }
 
     @Override
     public void deposito(Authentication authentication, BigDecimal valor) {
+        log.info("Realizando depósito na conta do usuário: {}", authentication.getName());
         Autenticacao autenticacao = this.autenticacaoService.findByEmail(authentication.getName());
         Usuario usuario = autenticacao.getUsuario();
         usuario.setSaldo(usuario.getSaldo().add(valor));
         this.usuarioRepository.save(usuario);
         this.transacaoService.createTransacao(valor, TipoTransacao.DEPOSITO, usuario);
+        log.info("Depósito realizado com sucesso na conta do usuário: {}", usuario.getNumeroConta());
     }
 
     @Override
     public void transferencia(Authentication authentication, TransferenciaDTO transferenciaDTO) {
+        log.info("Realizando transferência na conta do usuário: {}", authentication.getName());
         Autenticacao autenticacao = this.autenticacaoService.findByEmail(authentication.getName());
         Usuario usuario = autenticacao.getUsuario();
         if (usuario.getSaldo().compareTo(transferenciaDTO.valor()) < 0) {
-            throw new BusinessException("Saldo insuficiente");
+            log.error(MessageUtils.getMensagemValidacao("saldo.insufficient", usuario.getSaldo()));
+            throw new BusinessException(MessageUtils.getMensagemValidacao("saldo.insufficient", usuario.getSaldo()));
         }
         if (transferenciaDTO.numero().equals(usuario.getNumeroConta())) {
-            throw new BusinessException("Não é possível transferir para a mesma conta");
+            log.error(MessageUtils.getMensagemValidacao("usuario.cannot.transfer.to.the.same.account", usuario.getNumeroConta()));
+            throw new BusinessException(MessageUtils.getMensagemValidacao("usuario.cannot.transfer.to.the.same.account", usuario.getNumeroConta()));
         }
         Usuario usuarioDestino = this.usuarioRepository.findByNumeroConta(transferenciaDTO.numero())
-                .orElseThrow(() -> new BusinessException("Conta destino não encontrada"));
+                .orElseThrow(() -> new BusinessException(MessageUtils
+                        .getMensagemValidacao("usuario.by.conta.not.found", transferenciaDTO.numero())));
         usuario.setSaldo(usuario.getSaldo().subtract(transferenciaDTO.valor()));
         usuarioDestino.setSaldo(usuarioDestino.getSaldo().add(transferenciaDTO.valor()));
         this.usuarioRepository.save(usuario);
         this.usuarioRepository.save(usuarioDestino);
         this.transacaoService.createTransacao(transferenciaDTO.valor(), TipoTransacao.TRANSFERENCIA, usuario);
         this.transacaoService.createTransacao(transferenciaDTO.valor(), TipoTransacao.DEPOSITO, usuarioDestino);
+        log.info("Transferência realizada com sucesso na conta do usuário: {}", usuario.getNumeroConta());
     }
 
     @Override
     public List<ExtratoDTO> extrato(Authentication authentication) {
+        log.info("Buscando extrato da conta do usuário: {}", authentication.getName());
         Usuario usuario = this.autenticacaoService.findByEmail(authentication.getName()).getUsuario();
         return this.transacaoService.findByUsuario(usuario).stream()
                 .map(transacao -> new ExtratoDTO(transacao.getUsuario().getId(), transacao.getValor(),

@@ -26,9 +26,11 @@ public class SecurityController {
 
     @PostMapping("/login")
     public ResponseEntity<Response<TokenFRDTO>> login(@Valid @RequestBody LoginDTO loginDTO) {
+        log.info("Realizando login do usuário: {}", loginDTO.email());
         Response<TokenFRDTO> response = new Response<>();
         TokenFRDTO tokenFRDTO = this.securityService.login(loginDTO);
         response.setData(tokenFRDTO);
+        log.info("Login realizado com sucesso");
         return ResponseEntity.ok(response);
     }
 
