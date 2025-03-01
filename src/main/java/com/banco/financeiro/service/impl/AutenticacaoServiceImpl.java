@@ -2,6 +2,8 @@ package com.banco.financeiro.service.impl;
 
 import java.util.List;
 
+import com.banco.financeiro.exception.BusinessException;
+import com.banco.financeiro.utils.MessageUtils;
 import org.springframework.stereotype.Service;
 
 import com.banco.financeiro.constant.AuthenticationRole;
@@ -17,13 +19,19 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AutenticacaoServiceImpl implements AutenticacaoService {
 
-	private final AutenticacaoRepository autenticacaoRepository;
+    private final AutenticacaoRepository autenticacaoRepository;
 
-	@Override
-	public Autenticacao include(UsuarioPDTO usuarioPDTO, List<AuthenticationRole> roles) {
-		Autenticacao autenticacao = Autenticacao.builder().email(usuarioPDTO.email())
-				.password(Encryptor.encode(usuarioPDTO.password())).roles(roles).isLocked(false).build();
-		return this.autenticacaoRepository.save(autenticacao);
-	}
+    @Override
+    public Autenticacao include(UsuarioPDTO usuarioPDTO, List<AuthenticationRole> roles) {
+        Autenticacao autenticacao = Autenticacao.builder().email(usuarioPDTO.email())
+                .password(Encryptor.encode(usuarioPDTO.password())).roles(roles).isLocked(false).build();
+        return this.autenticacaoRepository.save(autenticacao);
+    }
+
+    @Override
+    public Autenticacao findByEmail(String email) {
+        return this.autenticacaoRepository.findByEmail(email).orElseThrow(() ->
+                new BusinessException(MessageUtils.getMensagemValidacao("autenticacao.not.found")));
+    }
 
 }
