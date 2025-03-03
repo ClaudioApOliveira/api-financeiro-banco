@@ -28,7 +28,7 @@ public class SecurityConfiguration {
     protected static final String[] ENDPOINTS_WITH_AUTHENTICATION_NOT_REQUIRED = {"/user/create", "/security/login"};
 
     protected static final String[] ENDPOINTS_WITH_AUTHENTICATION_REQUIRED = {"/user/saldo", "/user/deposito", "/user/transferencia",
-            "/user/extrato"};
+            "/user/extrato", "/user/senha"};
 
     @Bean
     protected SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {

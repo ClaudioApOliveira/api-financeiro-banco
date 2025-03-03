@@ -11,4 +11,6 @@ public interface AutenticacaoService {
 	Autenticacao include(UsuarioPDTO usuarioPDTO, List<AuthenticationRole> roles);
 
     Autenticacao findByEmail(String name);
+
+    Autenticacao saveAutenticacao(Autenticacao autenticacao);
 }

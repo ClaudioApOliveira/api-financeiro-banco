@@ -29,14 +29,22 @@ public class AutenticacaoServiceImpl implements AutenticacaoService {
         Autenticacao autenticacao = Autenticacao.builder().email(usuarioPDTO.email())
                 .password(Encryptor.encode(usuarioPDTO.password())).roles(roles).isLocked(false).build();
         log.info("Autenticação incluída com sucesso para o usuário: {}", usuarioPDTO.email());
-        return this.autenticacaoRepository.save(autenticacao);
+        return this.saveAutenticacao(autenticacao);
     }
 
     @Override
     public Autenticacao findByEmail(String email) {
         log.info("Buscando autenticação pelo email: {}", email);
         return this.autenticacaoRepository.findByEmail(email).orElseThrow(() ->
-                new BusinessException(MessageUtils.getMensagemValidacao("autenticacao.not.found")));
+                new BusinessException(MessageUtils.getMensagemValidacao("authentication.not.found")));
+    }
+
+    @Override
+    public Autenticacao saveAutenticacao(Autenticacao autenticacao) {
+        log.info("Salvando autenticação: {}", autenticacao);
+        this.autenticacaoRepository.save(autenticacao);
+        log.info("Autenticação salva com sucesso");
+        return autenticacao;
     }
 
 }

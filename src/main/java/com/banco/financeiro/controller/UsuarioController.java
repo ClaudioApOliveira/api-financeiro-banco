@@ -1,9 +1,6 @@
 package com.banco.financeiro.controller;
 
-import com.banco.financeiro.dto.ExtratoDTO;
-import com.banco.financeiro.dto.SaldoContaDTO;
-import com.banco.financeiro.dto.TransferenciaDTO;
-import com.banco.financeiro.dto.UsuarioPDTO;
+import com.banco.financeiro.dto.*;
 import com.banco.financeiro.service.UsuarioService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -61,6 +58,14 @@ public class UsuarioController {
     public ResponseEntity<List<ExtratoDTO>> extrato(Authentication authentication) {
         log.info("Buscando extrato do usuário: {}", authentication.getName());
         return ResponseEntity.ok(this.usuarioService.extrato(authentication));
+    }
+
+    @PostMapping("/senha")
+    public ResponseEntity<Void> transferencia(Authentication authentication, @RequestBody @Valid AtualizarSenhaDTO atualizarSenhaDTO) {
+        log.info("Atualizando senha do usuário: {}", authentication.getName());
+        this.usuarioService.atualizarSenha(authentication, atualizarSenhaDTO);
+        log.info("Senha atualizada com sucesso");
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
 }

@@ -20,7 +20,7 @@ public class AutenticacaoProcessor {
 	public void alreadyExists(String email) {
 		log.info("Verificando se já existe autenticação para o email: {}", email);
 		this.autenticacaoRepository.findByEmail(email).ifPresent(auth -> {
-			throw new BusinessException(MessageUtils.getMensagemValidacao("autenticacao.already.exists"));
+			throw new BusinessException(MessageUtils.getMensagemValidacao("authentication.already.exists"));
 		});
 
 	}
@@ -28,7 +28,7 @@ public class AutenticacaoProcessor {
 	public Autenticacao exists(String email) {
 		log.info("Verificando se existe autenticação para o email: {}", email);
 		return this.autenticacaoRepository.findByEmail(email)
-				.orElseThrow(() -> new BusinessException(MessageUtils.getMensagemValidacao("autenticacao.not.found")));
+				.orElseThrow(() -> new BusinessException(MessageUtils.getMensagemValidacao("authentication.not.found")));
 	}
 
 }

@@ -2,10 +2,7 @@ package com.banco.financeiro.service.impl;
 
 import com.banco.financeiro.constant.AuthenticationRole;
 import com.banco.financeiro.constant.TipoTransacao;
-import com.banco.financeiro.dto.ExtratoDTO;
-import com.banco.financeiro.dto.SaldoContaDTO;
-import com.banco.financeiro.dto.TransferenciaDTO;
-import com.banco.financeiro.dto.UsuarioPDTO;
+import com.banco.financeiro.dto.*;
 import com.banco.financeiro.exception.BusinessException;
 import com.banco.financeiro.model.Autenticacao;
 import com.banco.financeiro.model.Usuario;
@@ -14,6 +11,8 @@ import com.banco.financeiro.service.AutenticacaoService;
 import com.banco.financeiro.service.TransacaoService;
 import com.banco.financeiro.service.UsuarioService;
 import com.banco.financeiro.service.processor.AutenticacaoProcessor;
+import com.banco.financeiro.service.processor.SecurityProcessor;
+import com.banco.financeiro.utils.Encryptor;
 import com.banco.financeiro.utils.MessageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +32,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     private final AutenticacaoService autenticacaoService;
     private final AutenticacaoProcessor autenticacaoProcessor;
     private final TransacaoService transacaoService;
+    private final SecurityProcessor securityProcessor;
 
     @Override
     public void createUser(UsuarioPDTO usuarioPDTO) {
@@ -73,12 +73,12 @@ public class UsuarioServiceImpl implements UsuarioService {
         Autenticacao autenticacao = this.autenticacaoService.findByEmail(authentication.getName());
         Usuario usuario = autenticacao.getUsuario();
         if (usuario.getSaldo().compareTo(transferenciaDTO.valor()) < 0) {
-            log.error(MessageUtils.getMensagemValidacao("saldo.insufficient", usuario.getSaldo()));
-            throw new BusinessException(MessageUtils.getMensagemValidacao("saldo.insufficient", usuario.getSaldo()));
+            log.error(MessageUtils.getMensagemValidacao("balance.insufficient", usuario.getSaldo()));
+            throw new BusinessException(MessageUtils.getMensagemValidacao("balance.insufficient", usuario.getSaldo()));
         }
         if (transferenciaDTO.numero().equals(usuario.getNumeroConta())) {
-            log.error(MessageUtils.getMensagemValidacao("usuario.cannot.transfer.to.the.same.account", usuario.getNumeroConta()));
-            throw new BusinessException(MessageUtils.getMensagemValidacao("usuario.cannot.transfer.to.the.same.account", usuario.getNumeroConta()));
+            log.error(MessageUtils.getMensagemValidacao("user.cannot.transfer.to.the.same.account", usuario.getNumeroConta()));
+            throw new BusinessException(MessageUtils.getMensagemValidacao("user.cannot.transfer.to.the.same.account", usuario.getNumeroConta()));
         }
         Usuario usuarioDestino = this.usuarioRepository.findByNumeroConta(transferenciaDTO.numero())
                 .orElseThrow(() -> new BusinessException(MessageUtils
@@ -99,6 +99,17 @@ public class UsuarioServiceImpl implements UsuarioService {
         return this.transacaoService.findByUsuario(usuario).stream()
                 .map(transacao -> new ExtratoDTO(transacao.getUsuario().getId(), transacao.getValor(),
                         transacao.getTipoTransacao(), transacao.getDataTransacao())).toList();
+    }
+
+    @Override
+    public void atualizarSenha(Authentication authentication, AtualizarSenhaDTO atualizarSenhaDTO) {
+        Autenticacao autenticacao = this.autenticacaoService.findByEmail(authentication.getName());
+        if (Boolean.FALSE.equals(Encryptor.match(atualizarSenhaDTO.passwordOld(), autenticacao.getPassword()))) {
+            throw new BusinessException(MessageUtils.getMensagemValidacao("password.not.compatible"));
+        }
+
+        autenticacao.setPassword(Encryptor.encode(atualizarSenhaDTO.password()));
+        this.autenticacaoService.saveAutenticacao(autenticacao);
     }
 
 }
